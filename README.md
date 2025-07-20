@@ -32,6 +32,19 @@ php encode.php <パスワード> <ファイルパス>
 php encode.php mypassword data/document.txt
 ```
 
+## フォルダ内のzipファイル暗号化
+
+```bash
+php encode_zips.php <パスワード> <zipファイルフォルダパス> <出力フォルダパス>
+```
+
+例：
+```bash
+php encode_zips.php mypassword data/zips/ encrypted_zips/
+```
+
+このコマンドは指定されたフォルダ内のすべての`.zip`ファイルを暗号化し、指定された出力フォルダに保存します。
+
 ### ファイルの復号化
 
 ```bash

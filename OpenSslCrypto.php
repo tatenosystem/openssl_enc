@@ -16,10 +16,14 @@ class OpenSslCrypto
     private $cryptoFilePath;
     private $cryptoFilePathTmp;
 
-    public function __construct($dataFilePath, $password)
+    public function __construct($dataFilePath, $password, $outputFolderPath = null)
     {
         $this->dataFilePath = $dataFilePath;
-        $this->dataPath = dirname($dataFilePath);
+        if ($outputFolderPath === null) {
+            $this->dataPath = dirname($dataFilePath);
+        } else {
+            $this->dataPath = $outputFolderPath;
+        }
         $this->password = $password;
         $this->cryptoFilePath = $this->dataPath . '/' . self::CRYPTO_FILE_NAME;
         $this->cryptoFilePathTmp = $this->dataPath . '/' . self::CRYPTO_FILE_NAME_TMP;
