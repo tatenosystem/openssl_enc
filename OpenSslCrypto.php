@@ -15,9 +15,14 @@ class OpenSslCrypto
     private $password;
     private $cryptoFilePath;
     private $cryptoFilePathTmp;
+    private $isShowMessage;
 
-    public function __construct($dataFilePath, $password, $outputFolderPath = null)
+    public function __construct($dataFilePath, $password, $outputFolderPath = null, $isShowMessage = true)
     {
+        if (!file_exists($dataFilePath) || !is_file($dataFilePath)) {
+            throw new \RuntimeException('Input file does not exist: ' . $dataFilePath);
+        }
+
         $this->dataFilePath = $dataFilePath;
         if ($outputFolderPath === null) {
             $this->dataPath = dirname($dataFilePath);
@@ -27,6 +32,7 @@ class OpenSslCrypto
         $this->password = $password;
         $this->cryptoFilePath = $this->dataPath . '/' . self::CRYPTO_FILE_NAME;
         $this->cryptoFilePathTmp = $this->dataPath . '/' . self::CRYPTO_FILE_NAME_TMP;
+        $this->isShowMessage = $isShowMessage;
     }
 
     private function decodeCryptoListFile()
@@ -58,11 +64,10 @@ class OpenSslCrypto
     }
 
 
-    private function getOutputFilePath($isEncode)
+    public function getOutputFilePath($isEncode)
     {
         if (!file_exists($this->dataFilePath)) {
-            echo "\nInput file does not exist: " . $this->dataFilePath . "\n\n";
-            exit(1);
+            throw new \RuntimeException('Input file does not exist: ' . $this->dataFilePath);
         }
 
         $targetFileName = basename($this->dataFilePath);
@@ -80,9 +85,11 @@ class OpenSslCrypto
             }
             $elements = explode("\t", $line);
             if ($isEncode && $elements[0] === $targetFileName) {
+                $this->deleteCryptoTmpFile();
                 return $this->dataPath . '/' . $elements[1];
             }
             if (!$isEncode && $elements[1] === $targetFileName) {
+                $this->deleteCryptoTmpFile();
                 return $this->dataPath . '/' . $elements[0];
             }
         }
@@ -91,6 +98,7 @@ class OpenSslCrypto
             $newFileName = uniqid() . uniqid();
             file_put_contents($this->cryptoFilePathTmp, $targetFileName . "\t" . $newFileName . "\n", FILE_APPEND);
             $this->encodeCryptoListFile();
+            $this->deleteCryptoTmpFile();
         } else {
             throw new \RuntimeException('Encode File Not Found: ' . $targetFileName);
         }
@@ -130,11 +138,21 @@ class OpenSslCrypto
     private function checkResult($outputPath, $result, $message = '')
     {
         if (file_exists($outputPath)) {
-            echo "Success: " . $message . " " . $outputPath . "\n";
+            if ($this->isShowMessage) {
+                echo "Success: " . $message . " " . $outputPath . "\n";
+            }
         } else {
             echo "\n[Error] " . $message . " failed " . $outputPath . "\n\n";
             if ($result) echo "OpenSSL output: $result\n";
             throw new \RuntimeException($message . ' failed: ' . $outputPath);
         }
+    }
+
+    private function deleteCryptoTmpFile()
+    {
+        if (!file_exists($this->cryptoFilePathTmp)) {
+            return;
+        }
+        unlink($this->cryptoFilePathTmp);
     }
 }
